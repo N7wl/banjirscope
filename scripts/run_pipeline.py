@@ -32,6 +32,12 @@ from floodmap.io_preview import download_browse, load_browse  # noqa: E402
 
 FLOOD_RGB = (0, 170, 255)          # bright cyan-blue: new flood water
 PERMANENT_RGB = (20, 40, 110)      # dark navy: rivers, lakes, reservoirs
+FLOODED_VEG_RGB = (25, 195, 160)   # teal: flooded vegetation / built-up areas
+
+# Flooded vegetation is only accepted this close to open flood water. It
+# normally borders it, and the rule keeps out fields that merely got
+# brighter because the crop grew.
+FLOODED_VEG_MAX_DIST_M = 1000
 ASF_LINK = "https://search.asf.alaska.edu/#/?dataset=NISAR&searchType=List%20Search&searchList="
 
 
@@ -82,7 +88,7 @@ def prepare(src, grid, settings):
     return proc.resample_to_grid(db, src["x"], src["y"], src["epsg"], grid)
 
 
-def summary_figure(before_db, after_db, flood, perm, vmin, vmax, meta, path):
+def summary_figure(before_db, after_db, flood, perm, vmin, vmax, meta, path, veg=None):
     """Three-panel PNG (before | after | flood map) for the README."""
     import matplotlib
     matplotlib.use("Agg")
@@ -99,9 +105,13 @@ def summary_figure(before_db, after_db, flood, perm, vmin, vmax, meta, path):
     axes[2].imshow(np.where(perm, 1, np.nan), cmap=ListedColormap([np.array(PERMANENT_RGB) / 255]))
     axes[2].imshow(np.where(flood, 1, np.nan), cmap=ListedColormap([np.array(FLOOD_RGB) / 255]))
     axes[2].set_title(f"Detected flood water · {meta['stats']['flood_km2']:,.0f} km²", fontsize=13)
-    axes[2].legend(handles=[Patch(color=np.array(FLOOD_RGB) / 255, label="New flood water"),
-                            Patch(color=np.array(PERMANENT_RGB) / 255, label="Water on both dates")],
-                   loc="lower left", fontsize=10, framealpha=0.9)
+    handles = [Patch(color=np.array(FLOOD_RGB) / 255, label="New flood water"),
+               Patch(color=np.array(PERMANENT_RGB) / 255, label="Water on both dates")]
+    # Only draw flooded vegetation when it is large enough to see at this scale
+    if veg is not None and veg.sum() >= 0.01 * max(flood.sum(), 1):
+        axes[2].imshow(np.where(veg, 1, np.nan), cmap=ListedColormap([np.array(FLOODED_VEG_RGB) / 255]))
+        handles.append(Patch(color=np.array(FLOODED_VEG_RGB) / 255, label="Flooded vegetation / towns"))
+    axes[2].legend(handles=handles, loc="lower left", fontsize=10, framealpha=0.9)
     for ax in axes:
         ax.set_xticks([])
         ax.set_yticks([])
@@ -147,7 +157,9 @@ def min_patch_px(event, settings):
 def analyse_date(before_db, after_db, grid, settings, min_px):
     """Change detection of one flood date against the baseline.
 
-    Returns the detection result plus its area statistics and thresholds.
+    Maps open flood water (darkening) and, as a separate layer, flooded
+    vegetation / built-up areas (double-bounce brightening). Returns the
+    detection result plus its area statistics and thresholds.
     """
     result = detection.detect_flood(before_db, after_db, min_pixels=min_px,
                                     water_db_range=settings["water_db_range"])
@@ -160,6 +172,15 @@ def analyse_date(before_db, after_db, grid, settings, min_px):
     stats["flood_pct"] = round(100 * stats["flood_km2"] / max(stats["mapped_area_km2"], 1e-9), 1)
     thresholds = {"water_db": round(result["water_threshold_db"], 2),
                   "change_db": round(result["change_threshold_db"], 2)}
+
+    near_px = max(1, round(FLOODED_VEG_MAX_DIST_M / settings["res_m"]))
+    veg = detection.detect_flooded_vegetation(before_db, after_db, result,
+                                              min_pixels=min_px, near_flood_px=near_px)
+    result["flooded_vegetation"] = veg["flooded_vegetation"]
+    stats["flooded_vegetation_km2"] = round(detection.area_km2(veg["flooded_vegetation"], row_area), 1)
+    thresholds.update({"vegetation_bright_db": round(veg["bright_threshold_db"], 2),
+                       "vegetation_rise_db": round(veg["rise_threshold_db"], 2),
+                       "vegetation_max_dist_m": FLOODED_VEG_MAX_DIST_M})
     return result, stats, thresholds
 
 
@@ -167,12 +188,14 @@ def export_date(after_db, result, vmin, vmax, out_dir, prefix=""):
     """Write one flood date's overlays; return their paths relative to out_dir."""
     layers = {"after": f"{prefix}after.png", "flood": f"{prefix}flood.png",
               "permanent_water": f"{prefix}permanent_water.png",
-              "log_ratio": f"{prefix}log_ratio.png"}
+              "log_ratio": f"{prefix}log_ratio.png",
+              "flooded_vegetation": f"{prefix}flooded_vegetation.png"}
     (out_dir / prefix).mkdir(parents=True, exist_ok=True)
     export.save_gray(after_db, vmin, vmax, out_dir / layers["after"])
     export.save_mask(result["flood"], FLOOD_RGB, out_dir / layers["flood"])
     export.save_mask(result["permanent_water"], PERMANENT_RGB, out_dir / layers["permanent_water"], alpha=200)
     export.save_log_ratio(result["log_ratio"], out_dir / layers["log_ratio"])
+    export.save_mask(result["flooded_vegetation"], FLOODED_VEG_RGB, out_dir / layers["flooded_vegetation"])
     return layers
 
 
@@ -226,7 +249,8 @@ def process_event(event, mode, before_db, after_dbs, grid, settings, out_root, f
         print(f"  {shot['date']}: water < {thresholds['water_db']:.2f} dB, "
               f"change < {thresholds['change_db']:.2f} dB, "
               f"flood {stats['flood_km2']} km² ({stats['flood_pct']}% of mapped area), "
-              f"permanent water {stats['permanent_water_km2']} km²")
+              f"permanent water {stats['permanent_water_km2']} km², "
+              f"flooded vegetation {stats['flooded_vegetation_km2']} km²")
         layers = export_date(after_db, result, vmin, vmax, out_dir,
                              timeline.layer_prefix(shot, len(dates)))
         entries.append({
@@ -235,15 +259,17 @@ def process_event(event, mode, before_db, after_dbs, grid, settings, out_root, f
             "days_between": timeline.days_between(event["before"]["date"], shot["date"]),
             "stats": stats, "thresholds": thresholds, "layers": layers,
         })
-        frames.append((entries[-1], after_db, result["flood"], result["permanent_water"]))
+        frames.append((entries[-1], after_db, result["flood"], result["permanent_water"],
+                       result["flooded_vegetation"]))
 
     meta = build_meta(event, mode, grid, settings, min_px, vmin, vmax, entries)
     export.write_json(meta, out_dir / "meta.json")
     export.update_index(out_root, {"id": event["id"], "title": event["title"],
                                    "after_date": meta["after"]["date"], "mode": mode})
     if figures:
-        _, after_db, flood, perm = next(f for f in frames if f[0]["default"])
-        summary_figure(before_db, after_db, flood, perm, vmin, vmax, meta, out_dir / "summary.png")
+        _, after_db, flood, perm, veg = next(f for f in frames if f[0]["default"])
+        summary_figure(before_db, after_db, flood, perm, vmin, vmax, meta, out_dir / "summary.png",
+                       veg=veg)
         if len(frames) > 1:
             timeline_figure(before_db, [f[:3] for f in frames], vmin, vmax, meta,
                             out_dir / "timeline.png")

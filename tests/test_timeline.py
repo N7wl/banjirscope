@@ -117,13 +117,14 @@ def test_multi_date_outputs_and_meta(tmp_path):
 
     out = tmp_path / "test-event"
     assert (out / "before.png").exists()
-    layer_names = {"after", "flood", "permanent_water", "log_ratio"}
+    layer_names = {"after", "flood", "permanent_water", "log_ratio", "flooded_vegetation"}
     assert [t["date"] for t in meta["timeline"]] == ["2026-09-18", "2026-09-30", "2026-10-12"]
     for entry in meta["timeline"]:
         assert set(entry["layers"]) == layer_names
         for rel in entry["layers"].values():
             assert rel.startswith(entry["date"] + "/") and (out / rel).exists()
-        assert entry["thresholds"].keys() == {"water_db", "change_db"}
+        assert entry["thresholds"].keys() == {"water_db", "change_db", "vegetation_bright_db",
+                                             "vegetation_rise_db", "vegetation_max_dist_m"}
         assert entry["url"].endswith(entry["scene"])
     assert [t["days_between"] for t in meta["timeline"]] == [36, 48, 60]
 
@@ -159,7 +160,8 @@ def test_single_pair_keeps_flat_layout(tmp_path):
                                       PREVIEW_SETTINGS, tmp_path, figures=False)
     assert meta["layers"] == {"before": "before.png", "after": "after.png", "flood": "flood.png",
                               "permanent_water": "permanent_water.png",
-                              "log_ratio": "log_ratio.png"}
+                              "log_ratio": "log_ratio.png",
+                              "flooded_vegetation": "flooded_vegetation.png"}
     assert all((tmp_path / "test-event" / f).exists() for f in meta["layers"].values())
     assert len(meta["timeline"]) == 1 and meta["timeline"][0]["default"]
 
