@@ -37,7 +37,8 @@ flowchart LR
    - *Change threshold:* among pixels that are water on the flood date, permanent water barely changes while new flood water darkened a lot. Two-class Otsu on their log-ratio splits the two groups.
    - A pixel is **flooded** if it is water now, was not water before, and darkened past the change threshold. A morphological opening and a minimum-area filter (OpenCV) remove leftover noise.
 6. **Follow the flood over time.** NISAR passes over the same track every 12 days, so an event can list several flood dates. Each one is compared with the *same* dry baseline on the *same* grid, with its own Otsu thresholds, and all images share one brightness stretch so they can be compared by eye. The app shows a chip per date with a bar for its flooded area.
-7. **Publish as plain files.** Results are exported as transparent PNG overlays plus a `meta.json` with bounds and statistics. The web app is one static page, so it runs on GitHub Pages with no backend.
+7. **Look for water under trees and between buildings.** L-band passes through canopies. Where water stands under trees or between houses, the pulse bounces off the flat water, then off a trunk or wall, and straight back to the satellite ("double bounce"), so these places get *brighter* instead of darker. A separate layer flags pixels that were already bright before (the towns/trees class of a three-class Otsu on the dry-date image), brightened past a rise threshold (Otsu on the positive log-ratios, never below +3 dB) and lie within 1 km of open flood water. It is reported separately as `flooded_vegetation_km2`; the headline flooded area stays open water only.
+8. **Publish as plain files.** Results are exported as transparent PNG overlays plus a `meta.json` with bounds and statistics. The web app is one static page, so it runs on GitHub Pages with no backend.
 
 Flooded area is computed on the ground, correcting for Web-Mercator's stretch (pixel side × cos(latitude)).
 
@@ -52,6 +53,7 @@ Malaysia has excellent NISAR coverage (a pass every 12 days over every state sin
 | Before | 13 Aug 2026 — `NISAR_L2_PR_GCOV_028_004_D_081_4005_DHDH_A_20260813T114712_…` |
 | After | 30 Sep 2026 — `NISAR_L2_PR_GCOV_032_004_D_081_4005_DHDH_A_20260930T114712_…` |
 | Result (preview mode) | **≈ 959 km² newly flooded** (9.1% of the 10,540 km² analysed) |
+| Flooded vegetation / towns (preview mode) | ≈ 1 km² flagged next to open flood water; the 150 m preview pixels are too coarse for this layer |
 
 ![Before, after and detected flood water](docs/data/thailand-chao-phraya-2026/summary.png)
 
@@ -82,7 +84,7 @@ The mapped flood peaks on 30 September. By late October the northern part of the
 │   ├── io_gcov.py               stream/subset NISAR GCOV HDF5 (Earthdata token)
 │   ├── io_preview.py            free browse-image stand-in ("preview mode")
 │   ├── processing.py            multilook, Lee filter, dB, Web-Mercator resampling
-│   ├── detection.py             log-ratio + Otsu flood detection, cleanup, area
+│   ├── detection.py             log-ratio + Otsu flood detection, flooded vegetation, cleanup, area
 │   ├── timeline.py              multi-date events: flood dates, shared display stretch
 │   └── export.py                PNG overlays, meta.json, events index
 ├── scripts/
@@ -94,8 +96,8 @@ The mapped flood peaks on 30 September. By late October the northern part of the
 │                                multi-date config and output layout
 └── docs/                        the static web app (GitHub Pages serves this folder)
     ├── index.html, app.js, style.css, vendor/leaflet/
-    └── data/<event-id>/         before.png + meta.json, and the after/flood/water/change
-                                 PNGs (in one <date>/ folder per flood date for a timeline)
+    └── data/<event-id>/         before.png + meta.json, and the after/flood/water/change/
+                                 flooded-vegetation PNGs (one <date>/ folder per flood date)
 ```
 
 ## How to run
@@ -103,7 +105,7 @@ The mapped flood peaks on 30 September. By late October the northern part of the
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m pytest -q                                     # 19 tests, ~1 s
+python -m pytest -q                                     # 22 tests, ~1 s
 ```
 
 **1. Explore coverage (no login needed)**
@@ -152,7 +154,7 @@ Push the repository to GitHub, then go to **Settings → Pages → Build and dep
 
 ## Limitations and next steps
 
-- **Flooded vegetation and towns are missed.** At L-band, water under trees or between buildings causes a "double bounce" (water → trunk/wall → satellite) that makes these areas *brighter*. Detecting that rise (positive log-ratio in forest/urban areas) is a natural next step.
+- **Flooded vegetation and towns are only partly mapped.** Growing crops also get brighter between passes (rice gains a few dB over a season), so the double-bounce layer is deliberately strict and prefers missing real flooding to raising false alarms. It ignores fields, weak rises and anything far from open flood water, and patches smaller than about 3×3 pixels are removed (450 m in preview mode, so there it finds very little). Treat it as "likely flooded", best used with calibrated 30 m data; a land-cover map or HH/HV ratio would make it more reliable.
 - **Intentionally flooded rice paddies** can be counted as flood water. A land-cover mask or a multi-date seasonal baseline would reduce this.
 - **Terrain:** radar shadow in steep terrain is also dark. A HAND (height above nearest drainage) mask would remove false positives in hills.
 - **Timeline thresholds:** each date picks its own Otsu thresholds, which suits calibrated data. In preview mode it makes date-to-date differences less reliable than the maps themselves.

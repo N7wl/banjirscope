@@ -174,6 +174,7 @@
     state.layers.change.setUrl(base + files.log_ratio);
     state.layers.perm.setUrl(base + files.permanent_water);
     state.layers.flood.setUrl(base + files.flood);
+    if (state.layers.veg && files.flooded_vegetation) state.layers.veg.setUrl(base + files.flooded_vegetation);
     markSelectedChip();
     renderPanel(state.meta);
   }
@@ -203,6 +204,10 @@
       change: overlay(meta.layers.log_ratio, { pane: "change", opacity: 0.75 }),
       perm: overlay(meta.layers.permanent_water, { pane: "water", className: "crisp" }),
       flood: overlay(meta.layers.flood, { pane: "water", className: "crisp" }),
+      // Optional layer: results produced before it existed simply don't list it
+      ...(meta.layers.flooded_vegetation
+        ? { veg: overlay(meta.layers.flooded_vegetation, { pane: "water", className: "crisp" }) }
+        : {}),
       outline: L.rectangle(b, { color: "#ffffff", weight: 1, opacity: 0.6, dashArray: "4 6", fill: false, interactive: false }),
     };
     state.layers.outline.addTo(map);
@@ -235,6 +240,7 @@
     $("change-legend").hidden = !$("layer-change").checked;
     show("perm", $("layer-perm").checked);
     show("flood", $("layer-flood").checked);
+    show("veg", $("layer-veg").checked);
     // keep flood above permanent water
     if (map.hasLayer(state.layers.flood)) state.layers.flood.bringToFront();
     setRadarOpacity();
@@ -246,7 +252,7 @@
     ["before", "after"].forEach((k) => state.layers[k] && state.layers[k].setOpacity(o));
   }
 
-  ["layer-flood", "layer-perm", "layer-change", "layer-radar"].forEach((id) =>
+  ["layer-flood", "layer-veg", "layer-perm", "layer-change", "layer-radar"].forEach((id) =>
     $(id).addEventListener("change", syncLayerToggles));
   $("radar-opacity").addEventListener("input", setRadarOpacity);
 
@@ -264,6 +270,20 @@
   });
 
   // -------------------------------------------------------------- panel
+  // ------------------------------------------- flooded vegetation / towns
+  // Optional layer (off by default). Its toggle and stats line are hidden
+  // for events whose meta.json has no flooded_vegetation layer. `stats` are
+  // the selected date's, so the number follows the timeline.
+  function renderVegetation(meta, stats) {
+    const has = Boolean(meta.layers.flooded_vegetation);
+    const km2 = stats.flooded_vegetation_km2;
+    $("veg-toggle").hidden = !has;
+    $("veg-stat").hidden = !has || km2 == null;
+    if (!has) $("layer-veg").checked = false;
+    // Small areas are common for this cautious layer, so keep one decimal
+    if (km2 != null) $("veg-km2").textContent = km2 < 10 ? `${km2.toFixed(1)} km²` : fmtKm2(km2);
+  }
+
   function renderPanel(meta) {
     const cur = currentDate();          // the flood date picked on the timeline
     const s = cur.stats;
@@ -283,6 +303,7 @@
     $("flood-pct").textContent = `· ${s.flood_pct}% of the analysed area`;
     $("perm-km2").textContent = fmtKm2(s.permanent_water_km2);
     $("mapped-km2").textContent = fmtKm2(s.mapped_area_km2);
+    renderVegetation(meta, s);
     $("date-before").textContent = fmtDate(meta.before.date);
     $("date-after").textContent = fmtDate(cur.date);
     $("days-between").textContent = `${cur.days_between} days apart · same orbit track`;

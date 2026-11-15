@@ -69,6 +69,7 @@
         <div><dt>After</dt><dd id="date-after">–</dd></div>
         <div><dt>Water on both dates</dt><dd id="perm-km2">–</dd></div>
         <div><dt>Area analysed</dt><dd id="mapped-km2">–</dd></div>
+        <div id="veg-stat" hidden><dt>Flooded vegetation / towns</dt><dd id="veg-km2">–</dd></div>
       </dl>
       <p class="days" id="days-between"></p>
 
@@ -76,6 +77,8 @@
         <h3>Layers</h3>
         <label class="toggle"><input type="checkbox" id="layer-flood" checked>
           <span class="swatch" style="--c:#00aaff"></span>New flood water</label>
+        <label class="toggle" id="veg-toggle" hidden><input type="checkbox" id="layer-veg">
+          <span class="swatch" style="--c:#19c3a0"></span>Flooded vegetation / towns</label>
         <label class="toggle"><input type="checkbox" id="layer-perm">
           <span class="swatch" style="--c:#14286e"></span>Water on both dates</label>
         <label class="toggle"><input type="checkbox" id="layer-change">
@@ -101,9 +104,10 @@
           <li><b>Same viewpoint, two dates.</b> We compare a dry-season image with a flood-date image taken from the same orbit track, so differences come from the ground, not the viewing angle.</li>
           <li><b>Clean, then compare.</b> A Lee filter removes radar "speckle". Then a log-ratio image (after ÷ before, in dB) highlights where the ground got much darker.</li>
           <li><b>Automatic thresholds.</b> Otsu's method picks the water and change thresholds from the image histograms. A pixel is flooded if it is water now, wasn't before, and darkened strongly.</li>
+          <li><b>Water under trees and between houses.</b> There the pulse bounces off the water and then off a trunk or wall straight back to the satellite, so the area gets <i>brighter</i>. Trees and towns that brightened strongly right next to open flood water are shown as a separate layer.</li>
         </ol>
         <p class="thresholds" id="thresholds"></p>
-        <p class="caveat"><b>Limits:</b> flooded forests and towns can look <i>brighter</i> at L-band (the signal bounces off water and walls), so they are missed. Paddies flooded on purpose for planting can be counted as floods.</p>
+        <p class="caveat"><b>Limits:</b> the flooded vegetation / towns layer is deliberately cautious, because growing crops also get brighter; it misses flooding far from open water and is not counted in the headline area. Paddies flooded on purpose for planting can be counted as floods.</p>
       </details>
 
       <details class="sources">

@@ -39,11 +39,15 @@
     "flood_km2": 958.9,
     "permanent_water_km2": 335.6,
     "mapped_area_km2": 10540.4,
-    "flood_pct": 9.1
+    "flood_pct": 9.1,
+    "flooded_vegetation_km2": 1.0
   },
   "thresholds": {
     "water_db": -20.02,
-    "change_db": -8.73
+    "change_db": -8.73,
+    "vegetation_bright_db": -10.45,
+    "vegetation_rise_db": 3.44,
+    "vegetation_max_dist_m": 1000
   },
   "processing": {
     "resolution_m": 150,
@@ -60,7 +64,8 @@
     "after": "2026-09-30/after.png",
     "flood": "2026-09-30/flood.png",
     "permanent_water": "2026-09-30/permanent_water.png",
-    "log_ratio": "2026-09-30/log_ratio.png"
+    "log_ratio": "2026-09-30/log_ratio.png",
+    "flooded_vegetation": "2026-09-30/flooded_vegetation.png"
   },
   "timeline": [
     {
@@ -73,17 +78,22 @@
         "flood_km2": 789.7,
         "permanent_water_km2": 465.2,
         "mapped_area_km2": 10540.0,
-        "flood_pct": 7.5
+        "flood_pct": 7.5,
+        "flooded_vegetation_km2": 1.2
       },
       "thresholds": {
         "water_db": -19.2,
-        "change_db": -7.79
+        "change_db": -7.79,
+        "vegetation_bright_db": -10.45,
+        "vegetation_rise_db": 3.54,
+        "vegetation_max_dist_m": 1000
       },
       "layers": {
         "after": "2026-09-18/after.png",
         "flood": "2026-09-18/flood.png",
         "permanent_water": "2026-09-18/permanent_water.png",
-        "log_ratio": "2026-09-18/log_ratio.png"
+        "log_ratio": "2026-09-18/log_ratio.png",
+        "flooded_vegetation": "2026-09-18/flooded_vegetation.png"
       }
     },
     {
@@ -96,17 +106,22 @@
         "flood_km2": 958.9,
         "permanent_water_km2": 335.6,
         "mapped_area_km2": 10540.4,
-        "flood_pct": 9.1
+        "flood_pct": 9.1,
+        "flooded_vegetation_km2": 1.0
       },
       "thresholds": {
         "water_db": -20.02,
-        "change_db": -8.73
+        "change_db": -8.73,
+        "vegetation_bright_db": -10.45,
+        "vegetation_rise_db": 3.44,
+        "vegetation_max_dist_m": 1000
       },
       "layers": {
         "after": "2026-09-30/after.png",
         "flood": "2026-09-30/flood.png",
         "permanent_water": "2026-09-30/permanent_water.png",
-        "log_ratio": "2026-09-30/log_ratio.png"
+        "log_ratio": "2026-09-30/log_ratio.png",
+        "flooded_vegetation": "2026-09-30/flooded_vegetation.png"
       }
     },
     {
@@ -119,17 +134,22 @@
         "flood_km2": 790.5,
         "permanent_water_km2": 379.7,
         "mapped_area_km2": 10541.6,
-        "flood_pct": 7.5
+        "flood_pct": 7.5,
+        "flooded_vegetation_km2": 0.9
       },
       "thresholds": {
         "water_db": -19.67,
-        "change_db": -7.81
+        "change_db": -7.81,
+        "vegetation_bright_db": -10.45,
+        "vegetation_rise_db": 3.43,
+        "vegetation_max_dist_m": 1000
       },
       "layers": {
         "after": "2026-10-12/after.png",
         "flood": "2026-10-12/flood.png",
         "permanent_water": "2026-10-12/permanent_water.png",
-        "log_ratio": "2026-10-12/log_ratio.png"
+        "log_ratio": "2026-10-12/log_ratio.png",
+        "flooded_vegetation": "2026-10-12/flooded_vegetation.png"
       }
     },
     {
@@ -142,17 +162,22 @@
         "flood_km2": 773.2,
         "permanent_water_km2": 211.3,
         "mapped_area_km2": 10541.6,
-        "flood_pct": 7.3
+        "flood_pct": 7.3,
+        "flooded_vegetation_km2": 0.2
       },
       "thresholds": {
         "water_db": -20.02,
-        "change_db": -9.62
+        "change_db": -9.62,
+        "vegetation_bright_db": -10.45,
+        "vegetation_rise_db": 3.57,
+        "vegetation_max_dist_m": 1000
       },
       "layers": {
         "after": "2026-10-24/after.png",
         "flood": "2026-10-24/flood.png",
         "permanent_water": "2026-10-24/permanent_water.png",
-        "log_ratio": "2026-10-24/log_ratio.png"
+        "log_ratio": "2026-10-24/log_ratio.png",
+        "flooded_vegetation": "2026-10-24/flooded_vegetation.png"
       }
     }
   ],
@@ -166,5 +191,5 @@
       "url": "https://www.nationthailand.com/news/40071527"
     }
   ],
-  "generated_utc": "2026-11-15T14:33Z"
+  "generated_utc": "2026-11-15T14:39Z"
 }
