@@ -6,7 +6,7 @@ Built for the **NASA Space Apps Challenge 2026** (Johor Bahru local event), chal
 
 ![BanjirScope web app](docs/img/app.jpg)
 
-**Live demo:** https://n7wl.github.io/banjirscope/ · **Demo slides:** [docs/demo/BanjirScope-demo.pdf](docs/demo/BanjirScope-demo.pdf)
+**Live demo:** https://n7wl.github.io/banjirscope/ · **Demo video (27 s):** [docs/demo/BanjirScope-demo.mp4](docs/demo/BanjirScope-demo.mp4) · **Slides:** [docs/demo/BanjirScope-demo.pdf](docs/demo/BanjirScope-demo.pdf)
 
 ---
 
