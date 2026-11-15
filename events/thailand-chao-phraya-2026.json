@@ -1,0 +1,28 @@
+{
+  "id": "thailand-chao-phraya-2026",
+  "title": "Chao Phraya floods, central Thailand",
+  "location": "Sing Buri · Ang Thong · Ayutthaya, Thailand",
+  "description": "Persistent monsoon rain in late September and early October 2026 left large parts of the Chao Phraya floodplain under sustained flooding.",
+  "aoi_bbox": [100.0, 14.2, 100.8, 15.3],
+  "stack": {"track": 4, "frame": 81, "direction": "DESCENDING"},
+  "frequency": "A",
+  "polarization": "HHHH",
+  "before": {
+    "date": "2026-08-13",
+    "scene": "NISAR_L2_PR_GCOV_028_004_D_081_4005_DHDH_A_20260813T114712_20260813T114746_P05023_N_F_J_001"
+  },
+  "after": {
+    "date": "2026-09-30",
+    "scene": "NISAR_L2_PR_GCOV_032_004_D_081_4005_DHDH_A_20260930T114712_20260930T114746_P05023_N_F_J_001"
+  },
+  "processing": {
+    "multilook": 3,
+    "target_res_m": 30,
+    "lee_window": 5,
+    "min_flood_area_ha": 1.0
+  },
+  "news": [
+    {"title": "NASA Earth Observatory: Floodwaters Overwhelm Thailand", "url": "https://science.nasa.gov/earth-observatory/floodwaters-overwhelm-thailand"},
+    {"title": "The Nation: Satellite images reveal widespread flooding across 14 provinces", "url": "https://www.nationthailand.com/news/40071527"}
+  ]
+}
