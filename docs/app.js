@@ -11,12 +11,16 @@
  * so the before image shows left of the divider and the after image right
  * of it. Panes sit at the map's layer origin, so the clip rectangle is
  * computed in layer-point coordinates and refreshed whenever the map moves.
+ *
+ * Timeline: an event can hold several flood dates (meta.timeline), all
+ * compared with the same baseline. Date chips in the panel pick which one
+ * is shown as "after"; the baseline image on the left never changes.
  */
 (() => {
   "use strict";
 
   const DATA = "data";
-  const state = { meta: null, layers: {}, swipeFrac: 0.5 };
+  const state = { meta: null, timeline: [], dateIndex: 0, layers: {}, swipeFrac: 0.5 };
 
   // ---------------------------------------------------------------- map
   const map = L.map("map", { zoomControl: false, zoomSnap: 0.25, minZoom: 3 });
@@ -58,6 +62,7 @@
   const fmtKm2 = (v) => `${Math.round(v).toLocaleString()} km²`;
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const fmtDate = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; };
+  const fmtDay = (iso) => fmtDate(iso).slice(0, -5);            // "30 Sep"
 
   async function getJSON(url) {
     const res = await fetch(url, { cache: "no-cache" });
@@ -106,6 +111,80 @@
   });
   L.DomEvent.disableClickPropagation(swipe);
   map.on("move zoom resize viewreset", updateClip);
+
+  // ---------------------------------------------------------- timeline
+  // Flood dates of an event, oldest first. A single before/after pair has
+  // no meta.timeline, so it becomes a one-entry list built from the
+  // top-level fields and the rest of the app can treat both cases alike.
+  function timelineOf(meta) {
+    if (meta.timeline && meta.timeline.length) return meta.timeline;
+    return [{ ...meta.after, default: true, days_between: meta.days_between,
+              stats: meta.stats, thresholds: meta.thresholds, layers: meta.layers }];
+  }
+  const currentDate = () => state.timeline[state.dateIndex];
+
+  function renderTimeline() {
+    const chips = $("date-chips");
+    $("timeline").hidden = state.timeline.length < 2;
+    const peak = Math.max(...state.timeline.map((t) => t.stats.flood_km2), 1);
+    chips.replaceChildren(...state.timeline.map((t, i) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "date-chip";
+      chip.setAttribute("role", "radio");
+      chip.title = `${fmtDate(t.date)}: ${fmtKm2(t.stats.flood_km2)} newly flooded`;
+      chip.innerHTML = '<span class="chip-bar" aria-hidden="true"><i></i></span>' +
+        '<span class="chip-date"></span><span class="chip-km2"></span>';
+      chip.querySelector("i").style.height = `${Math.round(100 * t.stats.flood_km2 / peak)}%`;
+      chip.querySelector(".chip-date").textContent = fmtDay(t.date);
+      chip.querySelector(".chip-km2").textContent = fmtKm2(t.stats.flood_km2);
+      chip.addEventListener("click", () => selectDate(i));
+      return chip;
+    }));
+    markSelectedChip();
+  }
+
+  // Radio-group behaviour: only the selected chip is in the tab order
+  function markSelectedChip() {
+    [...$("date-chips").children].forEach((chip, i) => {
+      chip.setAttribute("aria-checked", String(i === state.dateIndex));
+      chip.tabIndex = i === state.dateIndex ? 0 : -1;
+    });
+  }
+
+  $("date-chips").addEventListener("keydown", (e) => {   // arrow keys step through dates
+    const last = state.timeline.length - 1;
+    const next = { ArrowLeft: state.dateIndex - 1, ArrowUp: state.dateIndex - 1,
+                   ArrowRight: state.dateIndex + 1, ArrowDown: state.dateIndex + 1,
+                   Home: 0, End: last }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    selectDate(Math.min(last, Math.max(0, next)));
+    $("date-chips").children[state.dateIndex].focus();
+  });
+
+  // Show another flood date: swap the images of the date-dependent layers
+  // in place (so pane, opacity and swipe clip are kept) and refresh the text.
+  function selectDate(index) {
+    if (index === state.dateIndex) return;
+    state.dateIndex = index;
+    const base = `${DATA}/${state.meta.id}/`;
+    const files = currentDate().layers;
+    state.layers.after.setUrl(base + files.after);
+    state.layers.change.setUrl(base + files.log_ratio);
+    state.layers.perm.setUrl(base + files.permanent_water);
+    state.layers.flood.setUrl(base + files.flood);
+    markSelectedChip();
+    renderPanel(state.meta);
+  }
+
+  // Fetch the other dates' main images ahead of time so switching is instant
+  function preloadTimeline() {
+    const base = `${DATA}/${state.meta.id}/`;
+    state.timeline.forEach((t, i) => {
+      if (i !== state.dateIndex) ["after", "flood"].forEach((k) => { new Image().src = base + t.layers[k]; });
+    });
+  }
 
   // ------------------------------------------------------------ layers
   function clearLayers() {
@@ -186,7 +265,8 @@
 
   // -------------------------------------------------------------- panel
   function renderPanel(meta) {
-    const s = meta.stats;
+    const cur = currentDate();          // the flood date picked on the timeline
+    const s = cur.stats;
     $("event-title").textContent = meta.title;
     $("event-location").textContent = meta.location;
     const badge = $("mode-badge");
@@ -204,18 +284,18 @@
     $("perm-km2").textContent = fmtKm2(s.permanent_water_km2);
     $("mapped-km2").textContent = fmtKm2(s.mapped_area_km2);
     $("date-before").textContent = fmtDate(meta.before.date);
-    $("date-after").textContent = fmtDate(meta.after.date);
-    $("days-between").textContent = `${meta.days_between} days apart · same orbit track`;
+    $("date-after").textContent = fmtDate(cur.date);
+    $("days-between").textContent = `${cur.days_between} days apart · same orbit track`;
     $("label-before").textContent = `◀ Before · ${fmtDate(meta.before.date)}`;
-    $("label-after").textContent = `After · ${fmtDate(meta.after.date)} ▶`;
+    $("label-after").textContent = `After · ${fmtDate(cur.date)} ▶`;
     $("thresholds").textContent =
-      `This event: water below ${meta.thresholds.water_db} dB on the flood date, ` +
-      `change below ${meta.thresholds.change_db} dB, ${meta.processing.resolution_m} m pixels, ` +
+      `This event: water below ${cur.thresholds.water_db} dB on the flood date, ` +
+      `change below ${cur.thresholds.change_db} dB, ${meta.processing.resolution_m} m pixels, ` +
       `track ${meta.stack.track} / frame ${meta.stack.frame} (${meta.stack.direction.toLowerCase()}), ${meta.polarization} polarisation.`;
 
     const links = [
       { title: `Before scene (${meta.before.date}) on ASF Vertex`, url: meta.before.url },
-      { title: `After scene (${meta.after.date}) on ASF Vertex`, url: meta.after.url },
+      { title: `After scene (${cur.date}) on ASF Vertex`, url: cur.url },
       { title: "NISAR mission (NASA)", url: "https://science.nasa.gov/mission/nisar/" },
       { title: "NISAR GCOV product guide (ASF)", url: "https://nisar-docs.asf.alaska.edu/gcov/" },
       ...meta.news,
@@ -234,8 +314,12 @@
   async function loadEvent(id) {
     const meta = await getJSON(`${DATA}/${id}/meta.json`);
     state.meta = meta;
+    state.timeline = timelineOf(meta);
+    state.dateIndex = Math.max(0, state.timeline.findIndex((t) => t.default));
+    renderTimeline();
     renderPanel(meta);
-    buildLayers(meta);
+    buildLayers(meta);          // meta.layers holds the default date's files
+    preloadTimeline();
     history.replaceState(null, "", `#${id}`);
   }
 
