@@ -73,6 +73,68 @@ def test_no_change_means_no_flood():
     assert res["flood"].mean() < 0.005
 
 
+def vegetation_pair(veg_rise_db=6.0, crop_rise_db=0.0):
+    """Flood scene plus a tree belt (-6 dB) right next to the flood box.
+
+    The belt brightens by `veg_rise_db` (double bounce) and the open fields
+    by `crop_rise_db` (crop growth). Returns before/after linear power and
+    masks of the belt and the town.
+    """
+    n = 300
+    before = np.full((n, n), -11.0)               # fields
+    town = np.zeros((n, n), bool)
+    town[30:70, 190:270] = True
+    belt = np.zeros((n, n), bool)
+    belt[184:208, 40:130] = True                  # 24 x 90 = 2160 px
+    flood = np.zeros((n, n), bool)
+    flood[100:180, 40:130] = True
+    before[town] = -1.0
+    before[belt] = -6.0
+    before[220:290, 160:280] = -6.0               # forest far from the flood
+    before[:, 140:150] = -23.0                    # river
+    after = before.copy()
+    after[before == -11.0] += crop_rise_db
+    after[flood] = -22.0
+    after[belt] += veg_rise_db
+    return speckle(before), speckle(after), belt, town
+
+
+def run_vegetation(before_p, after_p, **kwargs):
+    b = proc.to_db(proc.lee_filter(before_p, window=5, enl=9))
+    a = proc.to_db(proc.lee_filter(after_p, window=5, enl=9))
+    res = detection.detect_flood(b, a, min_pixels=20, edge_px=0)
+    return res, detection.detect_flooded_vegetation(b, a, res, min_pixels=20, **kwargs)
+
+
+def test_flooded_vegetation_next_to_flood_is_detected():
+    before_p, after_p, belt, _ = vegetation_pair(veg_rise_db=6.0)
+    res, veg = run_vegetation(before_p, after_p)
+    detected = veg["flooded_vegetation"]
+    overlap = (detected & belt).sum()
+    assert overlap / detected.sum() > 0.95
+    assert overlap / belt.sum() > 0.85
+    assert veg["rise_threshold_db"] >= 3.0
+    # the two layers never overlap, and the open-flood result is unchanged
+    assert not (detected & res["flood"]).any()
+
+
+def test_crop_growth_is_not_flooded_vegetation():
+    # Every field brightens by 2 dB (growing rice); the tree belt is stable
+    before_p, after_p, _, _ = vegetation_pair(veg_rise_db=0.0, crop_rise_db=2.0)
+    _, veg = run_vegetation(before_p, after_p)
+    assert veg["flooded_vegetation"].mean() < 0.001
+    # still nothing when the proximity rule is switched off
+    _, veg = run_vegetation(before_p, after_p, near_flood_px=None)
+    assert veg["flooded_vegetation"].mean() < 0.001
+
+
+def test_stable_town_and_distant_forest_are_not_flooded_vegetation():
+    before_p, after_p, belt, town = vegetation_pair(veg_rise_db=6.0)
+    _, veg = run_vegetation(before_p, after_p)
+    assert not (veg["flooded_vegetation"] & town).any()
+    assert (veg["flooded_vegetation"] & ~belt).mean() < 0.001
+
+
 def test_lee_filter_reduces_speckle_on_flat_area():
     flat = speckle(np.full((200, 200), -10.0), looks=4)
     filtered = proc.lee_filter(flat, window=7, enl=4)

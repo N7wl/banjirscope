@@ -26,7 +26,9 @@ Known limitations (L-band specifics)
 ------------------------------------
 * Flooded forest and flooded towns look *brighter*, not darker, because the
   signal bounces off the water and then off trunks or walls back to the
-  satellite ("double bounce"). This method maps open flood water only.
+  satellite ("double bounce"). detect_flood maps open flood water only;
+  detect_flooded_vegetation adds a separate, deliberately cautious layer
+  for that brightening.
 * Rice paddies flooded on purpose for planting can be detected as floods.
 """
 
@@ -112,6 +114,103 @@ def detect_flood(before_db, after_db, min_pixels=10,
         "log_ratio": log_ratio,
         "water_threshold_db": t_water,
         "change_threshold_db": t_change,
+    }
+
+
+def upper_otsu(values, fallback):
+    """Highest threshold of a three-class Otsu split of finite values.
+
+    On a dry-date radar image the three classes are water, fields and
+    towns/trees, so this is the boundary between fields and towns/trees.
+    Falls back to `fallback` if the histogram cannot support three classes.
+    """
+    values = values[np.isfinite(values)]
+    if values.size < 100 or np.ptp(values) == 0:
+        return float(fallback)
+    try:
+        return float(threshold_multiotsu(values, classes=3)[-1])
+    except ValueError:
+        return float(fallback)
+
+
+def detect_flooded_vegetation(before_db, after_db, flood_result, min_pixels=10,
+                              min_rise_db=3.0, near_flood_px=30):
+    """Map flooded vegetation and flooded built-up areas ("double bounce").
+
+    L-band radar (24 cm) passes through crop and tree canopies. When water
+    lies under the canopy or between buildings, the pulse bounces off the
+    flat water, then off a trunk, stem or wall, and returns to the
+    satellite. Two bounces off surfaces at a right angle act like a corner
+    reflector, so the area gets *brighter*, often by several dB in HH. That
+    is the opposite of open water, so detect_flood cannot see it.
+
+    A pixel is flagged when all of these hold:
+
+    1. It was bright before: above the upper boundary of a three-class Otsu
+       split of the baseline image, i.e. in the towns/trees class. Double
+       bounce needs something upright to bounce off. Leaving out the fields
+       class is also the main defence against crop growth (see below).
+    2. It brightened strongly: log-ratio above the rise threshold. Among
+       bright, non-water pixels most barely change, and flooded vegetation
+       forms a separate positive tail, so two-class Otsu on the positive
+       log-ratios picks the split. The threshold is never allowed below
+       `min_rise_db`, so ordinary brightness wobbles can never count.
+       (A median + k*MAD rule was not used: in a flood scene a large share
+       of the land really changes, so the spread is not a noise estimate.)
+    3. It is not water on the flood date and not already open flood water.
+    4. It lies within `near_flood_px` pixels of detected open flood water.
+       Flooded vegetation normally borders open flood water; a field that
+       brightened far away from any flood is more likely just growing.
+
+    The result is cleaned with the same opening + minimum-patch filter as
+    the open-water mask.
+
+    Caution: the main source of false alarms is crop growth. Rice and other
+    crops get brighter as they grow, typically by 1-3 dB between passes.
+    Rules 1, 2 (floor) and 4 are all there to keep those out, at the price
+    of missing weaker or isolated flooded vegetation: this layer favours
+    precision over recall and should be read as "likely", not "confirmed".
+
+    Parameters
+    ----------
+    before_db, after_db : the same images that were given to detect_flood
+    flood_result : the dict returned by detect_flood for this pair
+    min_pixels : smallest connected patch kept, in pixels
+    min_rise_db : floor for the rise threshold (dB)
+    near_flood_px : maximum distance to open flood water, in pixels;
+        None or 0 switches the proximity rule off
+
+    Returns
+    -------
+    dict with the boolean mask 'flooded_vegetation' and the two thresholds
+    used, 'bright_threshold_db' and 'rise_threshold_db'.
+    """
+    valid = flood_result["valid"]
+    log_ratio = flood_result["log_ratio"]
+    flood = flood_result["flood"]
+    t_water = flood_result["water_threshold_db"]
+
+    # NaN-safe comparisons: no-data pixels are excluded through `valid`
+    before = np.where(valid, before_db, -np.inf)
+    after = np.where(valid, after_db, -np.inf)
+
+    t_bright = upper_otsu(before_db[valid], fallback=np.inf)
+    candidates = valid & (before > t_bright) & (after > t_water) & ~flood
+
+    rises = log_ratio[candidates]
+    t_rise = max(otsu(rises[rises > 0], fallback=min_rise_db), min_rise_db)
+
+    mask = candidates & (log_ratio > t_rise)
+    if near_flood_px:
+        size = 2 * int(near_flood_px) + 1
+        disk = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (size, size))
+        mask &= cv2.dilate(flood.astype(np.uint8), disk).astype(bool)
+    mask = clean_mask(mask, min_pixels)
+
+    return {
+        "flooded_vegetation": mask,
+        "bright_threshold_db": t_bright,
+        "rise_threshold_db": t_rise,
     }
 
 
