@@ -186,9 +186,10 @@ def analyse_date(before_db, after_db, grid, settings, min_px):
 
 def export_date(after_db, result, vmin, vmax, out_dir, prefix=""):
     """Write one flood date's overlays; return their paths relative to out_dir."""
-    layers = {"after": f"{prefix}after.png", "flood": f"{prefix}flood.png",
+    # Radar and change images are photo-like: WebP. Masks stay crisp PNGs.
+    layers = {"after": f"{prefix}after.webp", "flood": f"{prefix}flood.png",
               "permanent_water": f"{prefix}permanent_water.png",
-              "log_ratio": f"{prefix}log_ratio.png",
+              "log_ratio": f"{prefix}log_ratio.webp",
               "flooded_vegetation": f"{prefix}flooded_vegetation.png"}
     (out_dir / prefix).mkdir(parents=True, exist_ok=True)
     export.save_gray(after_db, vmin, vmax, out_dir / layers["after"])
@@ -221,7 +222,7 @@ def build_meta(event, mode, grid, settings, min_px, vmin, vmax, entries):
         "processing": {"resolution_m": settings["res_m"], "lee_window": settings["lee_window"],
                        "enl": round(settings["enl"], 1), "min_patch_px": min_px,
                        "display_db_range": [round(vmin, 1), round(vmax, 1)]},
-        "layers": {"before": "before.png", **main_entry["layers"]},
+        "layers": {"before": "before.webp", **main_entry["layers"]},
         "timeline": entries,
         "news": event.get("news", []),
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
@@ -241,7 +242,7 @@ def process_event(event, mode, before_db, after_dbs, grid, settings, out_root, f
 
     # One stretch for the baseline and all dates so brightness is comparable
     vmin, vmax = timeline.shared_stretch([before_db, *after_dbs])
-    export.save_gray(before_db, vmin, vmax, out_dir / "before.png")
+    export.save_gray(before_db, vmin, vmax, out_dir / "before.webp")
 
     entries, frames = [], []
     for shot, after_db in zip(dates, after_dbs):

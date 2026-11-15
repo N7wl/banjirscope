@@ -116,7 +116,7 @@ def test_multi_date_outputs_and_meta(tmp_path):
                                       PREVIEW_SETTINGS, tmp_path, figures=False)
 
     out = tmp_path / "test-event"
-    assert (out / "before.png").exists()
+    assert (out / "before.webp").exists()
     layer_names = {"after", "flood", "permanent_water", "log_ratio", "flooded_vegetation"}
     assert [t["date"] for t in meta["timeline"]] == ["2026-09-18", "2026-09-30", "2026-10-12"]
     for entry in meta["timeline"]:
@@ -138,7 +138,7 @@ def test_multi_date_outputs_and_meta(tmp_path):
     assert main["date"] == meta["after"]["date"] == "2026-09-30"
     assert meta["stats"] == main["stats"] and meta["thresholds"] == main["thresholds"]
     assert meta["days_between"] == 48
-    assert meta["layers"] == {"before": "before.png", **main["layers"]}
+    assert meta["layers"] == {"before": "before.webp", **main["layers"]}
     assert json.loads((out / "meta.json").read_text()) == meta
     index = json.loads((tmp_path / "events.json").read_text())
     assert index[0]["id"] == "test-event" and index[0]["after_date"] == "2026-09-30"
@@ -158,9 +158,9 @@ def test_single_pair_keeps_flat_layout(tmp_path):
     before, afters = synthetic_stack(grid, flood_rows=[40])
     meta = run_pipeline.process_event(event, "preview", before, afters, grid,
                                       PREVIEW_SETTINGS, tmp_path, figures=False)
-    assert meta["layers"] == {"before": "before.png", "after": "after.png", "flood": "flood.png",
+    assert meta["layers"] == {"before": "before.webp", "after": "after.webp", "flood": "flood.png",
                               "permanent_water": "permanent_water.png",
-                              "log_ratio": "log_ratio.png",
+                              "log_ratio": "log_ratio.webp",
                               "flooded_vegetation": "flooded_vegetation.png"}
     assert all((tmp_path / "test-event" / f).exists() for f in meta["layers"].values())
     assert len(meta["timeline"]) == 1 and meta["timeline"][0]["default"]

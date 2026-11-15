@@ -61,7 +61,7 @@ def subset_stem(entry):
 def layer_prefix(entry, n_dates):
     """Sub-folder (with trailing slash) holding one date's web layers.
 
-    A single pair keeps the flat layout docs/data/<id>/after.png; with
+    A single pair keeps the flat layout docs/data/<id>/after.webp; with
     several dates each one gets its own folder docs/data/<id>/<date>/.
     """
     return "" if n_dates == 1 else f"{entry['date']}/"
