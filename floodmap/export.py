@@ -29,10 +29,11 @@ def save_gray(db, vmin, vmax, path, max_px=4096):
     """
     valid = np.isfinite(db)
     g = np.clip((np.nan_to_num(db, nan=vmin) - vmin) / (vmax - vmin), 0, 1)
-    rgba = np.zeros(db.shape + (4,), np.uint8)
-    rgba[..., :3] = (g * 255).astype(np.uint8)[..., None]
-    rgba[..., 3] = np.where(valid, 255, 0)
-    _fit(Image.fromarray(rgba, "RGBA"), max_px, Image.LANCZOS).save(path, optimize=True)
+    # Gray + alpha ("LA") is about a third smaller than RGBA for the same picture
+    la = np.zeros(db.shape + (2,), np.uint8)
+    la[..., 0] = (g * 255).astype(np.uint8)
+    la[..., 1] = np.where(valid, 255, 0)
+    _fit(Image.fromarray(la, "LA"), max_px, Image.LANCZOS).save(path, optimize=True)
 
 
 def save_mask(mask, rgb, path, alpha=230, max_px=4096):
