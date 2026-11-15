@@ -4,5 +4,6 @@
 *.token
 # Large raw downloads stay local
 data/raw/
+data/processed/
 __pycache__/
 .pytest_cache/
