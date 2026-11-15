@@ -1,0 +1,8 @@
+# Secrets: never commit
+.env
+.netrc
+*.token
+# Large raw downloads stay local
+data/raw/
+__pycache__/
+.pytest_cache/
