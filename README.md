@@ -52,22 +52,24 @@ Malaysia has excellent NISAR coverage (a pass every 12 days over every state sin
 | Stack | NISAR track 4, frame 81, descending, HH polarisation |
 | Before | 13 Aug 2026 — `NISAR_L2_PR_GCOV_028_004_D_081_4005_DHDH_A_20260813T114712_…` |
 | After | 30 Sep 2026 — `NISAR_L2_PR_GCOV_032_004_D_081_4005_DHDH_A_20260930T114712_…` |
-| Result (preview mode) | **≈ 959 km² newly flooded** (9.1% of the 10,540 km² analysed) |
-| Flooded vegetation / towns (preview mode) | ≈ 1 km² flagged next to open flood water; the 150 m preview pixels are too coarse for this layer |
+| Result (calibrated NISAR L2 GCOV, 30 m) | **≈ 1,334 km² newly flooded** on 30 Sep (12.6% of the 10,540 km² analysed) |
+| Flooded vegetation / towns | < 1 km² flagged next to open flood water (the layer is deliberately strict) |
 
 ![Before, after and detected flood water](docs/data/thailand-chao-phraya-2026/summary.png)
 
-**Timeline.** Four passes of the same stack, each compared with the 13 Aug baseline (preview mode):
+**Timeline.** Four passes of the same stack, each compared with the 13 Aug baseline:
 
 | Pass | 18 Sep | 30 Sep | 12 Oct | 24 Oct |
 |---|---|---|---|---|
-| Newly flooded | ≈ 790 km² | **≈ 959 km²** | ≈ 791 km² | ≈ 773 km² |
+| Newly flooded | 484 km² | **1,334 km²** | 1,153 km² | 1,028 km² |
 
 ![New flood water on each NISAR pass](docs/data/thailand-chao-phraya-2026/timeline.png)
 
-The mapped flood peaks on 30 September. By late October the northern part of the plain (Sing Buri) has largely drained, while water still stands downstream around Ayutthaya. The size of the decline after the peak is sensitive to the thresholds in preview mode, because browse images are not calibrated against each other; the calibrated mode gives a firmer answer.
+The flood builds through mid-September, peaks on 30 September and then recedes slowly: by late October the northern plain (Sing Buri) has largely drained, while water still stands downstream around Ayutthaya.
 
-> **Preview vs calibrated.** The numbers above come from *preview mode*, which uses ASF's free, uncalibrated browse images (~150 m pixels). They're useful for development and demos, but approximate. With a NASA Earthdata token, the same pipeline runs on calibrated **GCOV γ⁰ backscatter at 30 m** (`--mode gcov`). The web app labels which mode produced each result.
+**How robust is the peak number?** On 30 Sep the backscatter histogram has a clear water mode near −19 dB and a land mode near −7 dB; the three-class Otsu water threshold (−14.3 dB) sits in the valley between them. Requiring water to be darker than a stricter −18 dB (with the same > 6 dB drop) still gives about 1,200 km², so the peak flooded area is roughly **1,200–1,330 km²** for any reasonable threshold.
+
+> **Calibrated vs preview.** These numbers come from calibrated **GCOV γ⁰ backscatter** (radiometrically terrain-corrected, multilooked to 30 m), streamed with a NASA Earthdata token. The pipeline also has a *preview mode* that runs on ASF's free, uncalibrated browse images (~150 m) for quick checks without a login; it gave ≈ 960 km² for 30 Sep, which shows why calibrated data matters. The 24 Oct scene comes from a newer NISAR processing release (CRID P05036 vs P05023), so small calibration differences are possible for that date.
 
 ## NASA data used
 
@@ -154,10 +156,10 @@ Push the repository to GitHub, then go to **Settings → Pages → Build and dep
 
 ## Limitations and next steps
 
-- **Flooded vegetation and towns are only partly mapped.** Growing crops also get brighter between passes (rice gains a few dB over a season), so the double-bounce layer is deliberately strict and prefers missing real flooding to raising false alarms. It ignores fields, weak rises and anything far from open flood water, and patches smaller than about 3×3 pixels are removed (450 m in preview mode, so there it finds very little). Treat it as "likely flooded", best used with calibrated 30 m data; a land-cover map or HH/HV ratio would make it more reliable.
+- **Flooded vegetation and towns are only partly mapped.** Growing crops also get brighter between passes (rice gains a few dB over a season), so the double-bounce layer is deliberately strict and prefers missing real flooding to raising false alarms. It ignores fields, weak rises and anything far from open flood water, and patches smaller than about 3×3 pixels are removed. On the Chao Phraya event it flags well under 1 km², so treat it as "likely flooded" rather than a full inventory; a land-cover map or HH/HV ratio would make it more reliable.
 - **Intentionally flooded rice paddies** can be counted as flood water. A land-cover mask or a multi-date seasonal baseline would reduce this.
 - **Terrain:** radar shadow in steep terrain is also dark. A HAND (height above nearest drainage) mask would remove false positives in hills.
-- **Timeline thresholds:** each date picks its own Otsu thresholds, which suits calibrated data. In preview mode it makes date-to-date differences less reliable than the maps themselves.
+- **Timeline thresholds:** each date picks its own Otsu thresholds. This suits calibrated data, but day-to-day weather (wind roughening the water, rain on fields) still shifts them a little, so compare dates by their maps as well as their totals.
 
 ## Credits
 

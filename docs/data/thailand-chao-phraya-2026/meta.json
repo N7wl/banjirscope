@@ -3,20 +3,20 @@
   "title": "Chao Phraya floods, central Thailand",
   "location": "Sing Buri \u00b7 Ang Thong \u00b7 Ayutthaya, Thailand",
   "description": "Persistent monsoon rain in late September and early October 2026 left large parts of the Chao Phraya floodplain under sustained flooding.",
-  "mode": "preview",
+  "mode": "gcov",
   "bounds": [
     [
-      14.198923923418997,
+      14.199968967063658,
       99.99999999999999
     ],
     [
       15.299999999999999,
-      100.80039891815048
+      100.80012942356525
     ]
   ],
   "center": [
-    14.749461961709498,
-    100.40019945907522
+    14.74998448353183,
+    100.40006471178262
   ],
   "before": {
     "date": "2026-08-13",
@@ -36,35 +36,35 @@
   },
   "polarization": "HH",
   "stats": {
-    "flood_km2": 958.9,
-    "permanent_water_km2": 335.6,
-    "mapped_area_km2": 10540.4,
-    "flood_pct": 9.1,
-    "flooded_vegetation_km2": 1.0
+    "flood_km2": 1333.5,
+    "permanent_water_km2": 256.0,
+    "mapped_area_km2": 10547.5,
+    "flood_pct": 12.6,
+    "flooded_vegetation_km2": 0.4
   },
   "thresholds": {
-    "water_db": -20.02,
-    "change_db": -8.73,
-    "vegetation_bright_db": -10.45,
-    "vegetation_rise_db": 3.44,
+    "water_db": -14.33,
+    "change_db": -6.0,
+    "vegetation_bright_db": -6.97,
+    "vegetation_rise_db": 3.0,
     "vegetation_max_dist_m": 1000
   },
   "processing": {
-    "resolution_m": 150,
-    "lee_window": 3,
-    "enl": 4.0,
-    "min_patch_px": 2,
+    "resolution_m": 30,
+    "lee_window": 5,
+    "enl": 36.1,
+    "min_patch_px": 11,
     "display_db_range": [
-      -28.6,
-      -2.2
+      -20.0,
+      -0.9
     ]
   },
   "layers": {
-    "before": "before.png",
-    "after": "2026-09-30/after.png",
+    "before": "before.webp",
+    "after": "2026-09-30/after.webp",
     "flood": "2026-09-30/flood.png",
     "permanent_water": "2026-09-30/permanent_water.png",
-    "log_ratio": "2026-09-30/log_ratio.png",
+    "log_ratio": "2026-09-30/log_ratio.webp",
     "flooded_vegetation": "2026-09-30/flooded_vegetation.png"
   },
   "timeline": [
@@ -75,24 +75,24 @@
       "default": false,
       "days_between": 36,
       "stats": {
-        "flood_km2": 789.7,
-        "permanent_water_km2": 465.2,
-        "mapped_area_km2": 10540.0,
-        "flood_pct": 7.5,
-        "flooded_vegetation_km2": 1.2
+        "flood_km2": 483.7,
+        "permanent_water_km2": 255.4,
+        "mapped_area_km2": 10547.5,
+        "flood_pct": 4.6,
+        "flooded_vegetation_km2": 0.3
       },
       "thresholds": {
-        "water_db": -19.2,
-        "change_db": -7.79,
-        "vegetation_bright_db": -10.45,
-        "vegetation_rise_db": 3.54,
+        "water_db": -14.0,
+        "change_db": -4.23,
+        "vegetation_bright_db": -6.97,
+        "vegetation_rise_db": 3.0,
         "vegetation_max_dist_m": 1000
       },
       "layers": {
-        "after": "2026-09-18/after.png",
+        "after": "2026-09-18/after.webp",
         "flood": "2026-09-18/flood.png",
         "permanent_water": "2026-09-18/permanent_water.png",
-        "log_ratio": "2026-09-18/log_ratio.png",
+        "log_ratio": "2026-09-18/log_ratio.webp",
         "flooded_vegetation": "2026-09-18/flooded_vegetation.png"
       }
     },
@@ -103,24 +103,24 @@
       "default": true,
       "days_between": 48,
       "stats": {
-        "flood_km2": 958.9,
-        "permanent_water_km2": 335.6,
-        "mapped_area_km2": 10540.4,
-        "flood_pct": 9.1,
-        "flooded_vegetation_km2": 1.0
+        "flood_km2": 1333.5,
+        "permanent_water_km2": 256.0,
+        "mapped_area_km2": 10547.5,
+        "flood_pct": 12.6,
+        "flooded_vegetation_km2": 0.4
       },
       "thresholds": {
-        "water_db": -20.02,
-        "change_db": -8.73,
-        "vegetation_bright_db": -10.45,
-        "vegetation_rise_db": 3.44,
+        "water_db": -14.33,
+        "change_db": -6.0,
+        "vegetation_bright_db": -6.97,
+        "vegetation_rise_db": 3.0,
         "vegetation_max_dist_m": 1000
       },
       "layers": {
-        "after": "2026-09-30/after.png",
+        "after": "2026-09-30/after.webp",
         "flood": "2026-09-30/flood.png",
         "permanent_water": "2026-09-30/permanent_water.png",
-        "log_ratio": "2026-09-30/log_ratio.png",
+        "log_ratio": "2026-09-30/log_ratio.webp",
         "flooded_vegetation": "2026-09-30/flooded_vegetation.png"
       }
     },
@@ -131,24 +131,24 @@
       "default": false,
       "days_between": 60,
       "stats": {
-        "flood_km2": 790.5,
-        "permanent_water_km2": 379.7,
-        "mapped_area_km2": 10541.6,
-        "flood_pct": 7.5,
-        "flooded_vegetation_km2": 0.9
+        "flood_km2": 1152.9,
+        "permanent_water_km2": 192.4,
+        "mapped_area_km2": 10547.5,
+        "flood_pct": 10.9,
+        "flooded_vegetation_km2": 0.3
       },
       "thresholds": {
-        "water_db": -19.67,
-        "change_db": -7.81,
-        "vegetation_bright_db": -10.45,
-        "vegetation_rise_db": 3.43,
+        "water_db": -14.0,
+        "change_db": -6.01,
+        "vegetation_bright_db": -6.97,
+        "vegetation_rise_db": 3.0,
         "vegetation_max_dist_m": 1000
       },
       "layers": {
-        "after": "2026-10-12/after.png",
+        "after": "2026-10-12/after.webp",
         "flood": "2026-10-12/flood.png",
         "permanent_water": "2026-10-12/permanent_water.png",
-        "log_ratio": "2026-10-12/log_ratio.png",
+        "log_ratio": "2026-10-12/log_ratio.webp",
         "flooded_vegetation": "2026-10-12/flooded_vegetation.png"
       }
     },
@@ -159,24 +159,24 @@
       "default": false,
       "days_between": 72,
       "stats": {
-        "flood_km2": 773.2,
-        "permanent_water_km2": 211.3,
-        "mapped_area_km2": 10541.6,
-        "flood_pct": 7.3,
-        "flooded_vegetation_km2": 0.2
+        "flood_km2": 1028.2,
+        "permanent_water_km2": 146.2,
+        "mapped_area_km2": 10547.5,
+        "flood_pct": 9.7,
+        "flooded_vegetation_km2": 0.1
       },
       "thresholds": {
-        "water_db": -20.02,
-        "change_db": -9.62,
-        "vegetation_bright_db": -10.45,
-        "vegetation_rise_db": 3.57,
+        "water_db": -14.39,
+        "change_db": -6.73,
+        "vegetation_bright_db": -6.97,
+        "vegetation_rise_db": 3.0,
         "vegetation_max_dist_m": 1000
       },
       "layers": {
-        "after": "2026-10-24/after.png",
+        "after": "2026-10-24/after.webp",
         "flood": "2026-10-24/flood.png",
         "permanent_water": "2026-10-24/permanent_water.png",
-        "log_ratio": "2026-10-24/log_ratio.png",
+        "log_ratio": "2026-10-24/log_ratio.webp",
         "flooded_vegetation": "2026-10-24/flooded_vegetation.png"
       }
     }
@@ -191,5 +191,5 @@
       "url": "https://www.nationthailand.com/news/40071527"
     }
   ],
-  "generated_utc": "2026-11-15T14:39Z"
+  "generated_utc": "2026-11-15T15:13Z"
 }
