@@ -1,6 +1,6 @@
 # BanjirScope: seeing floods through monsoon cloud with NISAR radar
 
-*Banjir* is Malay for "flood". BanjirScope maps flood water from **NASA-ISRO NISAR** L-band radar and shows it on an interactive web map: before/after swipe, a flood mask, and the flooded area in km².
+*Banjir* is Malay for "flood". BanjirScope maps flood water from **NASA-ISRO NISAR** L-band radar and shows it on an interactive web map: before/after swipe, a flood mask, the flooded area in km², and a timeline that follows the flood across successive radar passes.
 
 Built for the **NASA Space Apps Challenge 2026** (Johor Bahru local event), challenge *"Dancing with the SARs"*.
 
@@ -36,7 +36,8 @@ flowchart LR
    - *Water threshold:* three-class Otsu on the flood-date image (water / fields / towns and trees). The lowest threshold separates water from land.
    - *Change threshold:* among pixels that are water on the flood date, permanent water barely changes while new flood water darkened a lot. Two-class Otsu on their log-ratio splits the two groups.
    - A pixel is **flooded** if it is water now, was not water before, and darkened past the change threshold. A morphological opening and a minimum-area filter (OpenCV) remove leftover noise.
-6. **Publish as plain files.** Results are exported as transparent PNG overlays plus a `meta.json` with bounds and statistics. The web app is one static page, so it runs on GitHub Pages with no backend.
+6. **Follow the flood over time.** NISAR passes over the same track every 12 days, so an event can list several flood dates. Each one is compared with the *same* dry baseline on the *same* grid, with its own Otsu thresholds, and all images share one brightness stretch so they can be compared by eye. The app shows a chip per date with a bar for its flooded area.
+7. **Publish as plain files.** Results are exported as transparent PNG overlays plus a `meta.json` with bounds and statistics. The web app is one static page, so it runs on GitHub Pages with no backend.
 
 Flooded area is computed on the ground, correcting for Web-Mercator's stretch (pixel side × cos(latitude)).
 
@@ -53,6 +54,16 @@ Malaysia has excellent NISAR coverage (a pass every 12 days over every state sin
 | Result (preview mode) | **≈ 959 km² newly flooded** (9.1% of the 10,540 km² analysed) |
 
 ![Before, after and detected flood water](docs/data/thailand-chao-phraya-2026/summary.png)
+
+**Timeline.** Four passes of the same stack, each compared with the 13 Aug baseline (preview mode):
+
+| Pass | 18 Sep | 30 Sep | 12 Oct | 24 Oct |
+|---|---|---|---|---|
+| Newly flooded | ≈ 790 km² | **≈ 959 km²** | ≈ 791 km² | ≈ 773 km² |
+
+![New flood water on each NISAR pass](docs/data/thailand-chao-phraya-2026/timeline.png)
+
+The mapped flood peaks on 30 September. By late October the northern part of the plain (Sing Buri) has largely drained, while water still stands downstream around Ayutthaya. The size of the decline after the peak is sensitive to the thresholds in preview mode, because browse images are not calibrated against each other; the calibrated mode gives a firmer answer.
 
 > **Preview vs calibrated.** The numbers above come from *preview mode*, which uses ASF's free, uncalibrated browse images (~150 m pixels). They're useful for development and demos, but approximate. With a NASA Earthdata token, the same pipeline runs on calibrated **GCOV γ⁰ backscatter at 30 m** (`--mode gcov`). The web app labels which mode produced each result.
 
@@ -72,16 +83,19 @@ Malaysia has excellent NISAR coverage (a pass every 12 days over every state sin
 │   ├── io_preview.py            free browse-image stand-in ("preview mode")
 │   ├── processing.py            multilook, Lee filter, dB, Web-Mercator resampling
 │   ├── detection.py             log-ratio + Otsu flood detection, cleanup, area
+│   ├── timeline.py              multi-date events: flood dates, shared display stretch
 │   └── export.py                PNG overlays, meta.json, events index
 ├── scripts/
 │   ├── find_scenes.py           search NISAR coverage, group by repeat-pass stack
 │   ├── preview_scenes.py        download browse images to eyeball candidate dates
 │   ├── fetch_subset.py          stream the AOI out of each GCOV file -> .npz
 │   └── run_pipeline.py          everything from filtering to web layers
-├── tests/test_pipeline.py       synthetic-scene tests with known flood extent
+├── tests/                       synthetic scenes with known flood extent, mock GCOV files,
+│                                multi-date config and output layout
 └── docs/                        the static web app (GitHub Pages serves this folder)
     ├── index.html, app.js, style.css, vendor/leaflet/
-    └── data/<event-id>/         before/after/flood PNGs + meta.json
+    └── data/<event-id>/         before.png + meta.json, and the after/flood/water/change
+                                 PNGs (in one <date>/ folder per flood date for a timeline)
 ```
 
 ## How to run
@@ -89,7 +103,7 @@ Malaysia has excellent NISAR coverage (a pass every 12 days over every state sin
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m pytest -q                                     # 7 tests, < 1 s
+python -m pytest -q                                     # 19 tests, ~1 s
 ```
 
 **1. Explore coverage (no login needed)**
@@ -113,10 +127,11 @@ python scripts/run_pipeline.py --event events/thailand-chao-phraya-2026.json --m
    or export it for the current shell: `export EARTHDATA_TOKEN=...`
 4. Run:
    ```bash
-   python scripts/fetch_subset.py --event events/thailand-chao-phraya-2026.json   # streams ~AOI only
+   python scripts/fetch_subset.py --event events/thailand-chao-phraya-2026.json   # streams ~AOI only, one scene per date
    python scripts/run_pipeline.py --event events/thailand-chao-phraya-2026.json   # --mode gcov is default
    ```
-   Already downloaded the full `.h5` files? Use `fetch_subset.py --event ... --local before.h5 after.h5`.
+   If the stream is interrupted, rerun with `--skip-existing` to keep the dates already saved.
+   Already downloaded the full `.h5` files? Use `fetch_subset.py --event ... --local before.h5 after.h5` (baseline first, then one file per flood date, oldest first).
 
 **3. View the app locally**
 ```bash
@@ -132,7 +147,7 @@ Push the repository to GitHub, then go to **Settings → Pages → Build and dep
 
 1. Find a repeat-pass pair: `python scripts/find_scenes.py --aoi <area> --start <date>`. Add your area's bounding box to `AOIS` in that script if needed.
 2. Check candidate dates by eye with `preview_scenes.py`. Water should look dark on the flood date and not on the dry date.
-3. Copy `events/thailand-chao-phraya-2026.json`, edit the bbox, scene names and text.
+3. Copy `events/thailand-chao-phraya-2026.json`, edit the bbox, scene names and text. `before` is the dry baseline and `after` the main flood date. To follow the flood over time, list more passes of the same stack under the optional `timeline` key (`[{"date": ..., "scene": ...}]`); leave it out for a simple pair.
 4. Run the pipeline. The app picks up every event listed in `docs/data/events.json` and shows a selector when there is more than one.
 
 ## Limitations and next steps
@@ -140,7 +155,7 @@ Push the repository to GitHub, then go to **Settings → Pages → Build and dep
 - **Flooded vegetation and towns are missed.** At L-band, water under trees or between buildings causes a "double bounce" (water → trunk/wall → satellite) that makes these areas *brighter*. Detecting that rise (positive log-ratio in forest/urban areas) is a natural next step.
 - **Intentionally flooded rice paddies** can be counted as flood water. A land-cover mask or a multi-date seasonal baseline would reduce this.
 - **Terrain:** radar shadow in steep terrain is also dark. A HAND (height above nearest drainage) mask would remove false positives in hills.
-- **Time series:** NISAR's 12-day revisit allows animating a flood's rise and fall (e.g. adding the 12 Oct 2026 acquisition).
+- **Timeline thresholds:** each date picks its own Otsu thresholds, which suits calibrated data. In preview mode it makes date-to-date differences less reliable than the maps themselves.
 
 ## Credits
 
