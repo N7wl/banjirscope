@@ -6,7 +6,7 @@ Built for the **NASA Space Apps Challenge 2026** (Johor Bahru local event), chal
 
 ![BanjirScope web app](docs/img/app.jpg)
 
-**Live demo:** `https://<your-github-username>.github.io/<repo-name>/` (see [Deploy](#deploy-to-github-pages))
+**Live demo:** https://n7wl.github.io/banjirscope/ · **Demo slides:** [docs/demo/BanjirScope-demo.pdf](docs/demo/BanjirScope-demo.pdf)
 
 ---
 
@@ -160,6 +160,10 @@ Push the repository to GitHub, then go to **Settings → Pages → Build and dep
 - **Intentionally flooded rice paddies** can be counted as flood water. A land-cover mask or a multi-date seasonal baseline would reduce this.
 - **Terrain:** radar shadow in steep terrain is also dark. A HAND (height above nearest drainage) mask would remove false positives in hills.
 - **Timeline thresholds:** each date picks its own Otsu thresholds. This suits calibrated data, but day-to-day weather (wind roughening the water, rain on fields) still shifts them a little, so compare dates by their maps as well as their totals.
+
+## Use of AI
+
+Following the NASA Space Apps rules on AI disclosure: the code, tests, web app and documentation were written with the help of an AI coding assistant (Anthropic's Claude), directed and reviewed by the author. All radar data comes from NASA-ISRO NISAR products; every figure and map is computed from that data by the pipeline in this repository. No AI-generated images are used.
 
 ## Credits
 
