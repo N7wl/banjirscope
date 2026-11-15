@@ -37,7 +37,9 @@ jobs:
           events = json.loads((root / "events.json").read_text())
           for e in events:
               meta = json.loads((root / e["id"] / "meta.json").read_text())
-              for name in meta["layers"].values():
+              names = list(meta["layers"].values())
+              names += [n for t in meta.get("timeline", []) for n in t["layers"].values()]
+              for name in names:
                   assert (root / e["id"] / name).exists(), f"missing layer {e['id']}/{name}"
           print(f"{len(events)} event(s) OK")
           PY
