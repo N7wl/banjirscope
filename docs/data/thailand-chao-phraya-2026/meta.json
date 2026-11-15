@@ -1,0 +1,76 @@
+{
+  "id": "thailand-chao-phraya-2026",
+  "title": "Chao Phraya floods, central Thailand",
+  "location": "Sing Buri \u00b7 Ang Thong \u00b7 Ayutthaya, Thailand",
+  "description": "Persistent monsoon rain in late September and early October 2026 left large parts of the Chao Phraya floodplain under sustained flooding.",
+  "mode": "preview",
+  "bounds": [
+    [
+      14.198923923418997,
+      99.99999999999999
+    ],
+    [
+      15.299999999999999,
+      100.80039891815048
+    ]
+  ],
+  "center": [
+    14.749461961709498,
+    100.40019945907522
+  ],
+  "before": {
+    "date": "2026-08-13",
+    "scene": "NISAR_L2_PR_GCOV_028_004_D_081_4005_DHDH_A_20260813T114712_20260813T114746_P05023_N_F_J_001",
+    "url": "https://search.asf.alaska.edu/#/?dataset=NISAR&searchType=List%20Search&searchList=NISAR_L2_PR_GCOV_028_004_D_081_4005_DHDH_A_20260813T114712_20260813T114746_P05023_N_F_J_001"
+  },
+  "after": {
+    "date": "2026-09-30",
+    "scene": "NISAR_L2_PR_GCOV_032_004_D_081_4005_DHDH_A_20260930T114712_20260930T114746_P05023_N_F_J_001",
+    "url": "https://search.asf.alaska.edu/#/?dataset=NISAR&searchType=List%20Search&searchList=NISAR_L2_PR_GCOV_032_004_D_081_4005_DHDH_A_20260930T114712_20260930T114746_P05023_N_F_J_001"
+  },
+  "days_between": 48,
+  "stack": {
+    "track": 4,
+    "frame": 81,
+    "direction": "DESCENDING"
+  },
+  "polarization": "HH",
+  "stats": {
+    "flood_km2": 958.9,
+    "permanent_water_km2": 335.6,
+    "mapped_area_km2": 10540.4,
+    "flood_pct": 9.1
+  },
+  "thresholds": {
+    "water_db": -20.02,
+    "change_db": -8.73
+  },
+  "processing": {
+    "resolution_m": 150,
+    "lee_window": 3,
+    "enl": 4.0,
+    "min_patch_px": 2,
+    "display_db_range": [
+      -28.2,
+      -2.1
+    ]
+  },
+  "layers": {
+    "before": "before.png",
+    "after": "after.png",
+    "flood": "flood.png",
+    "permanent_water": "permanent_water.png",
+    "log_ratio": "log_ratio.png"
+  },
+  "news": [
+    {
+      "title": "NASA Earth Observatory: Floodwaters Overwhelm Thailand",
+      "url": "https://science.nasa.gov/earth-observatory/floodwaters-overwhelm-thailand"
+    },
+    {
+      "title": "The Nation: Satellite images reveal widespread flooding across 14 provinces",
+      "url": "https://www.nationthailand.com/news/40071527"
+    }
+  ],
+  "generated_utc": "2026-11-15T13:29Z"
+}
