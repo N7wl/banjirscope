@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check web app JavaScript syntax
+        run: node --check docs/app.js
+
+      - name: Validate web app data files
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          root = pathlib.Path("docs/data")
+          events = json.loads((root / "events.json").read_text())
+          for e in events:
+              meta = json.loads((root / e["id"] / "meta.json").read_text())
+              for name in meta["layers"].values():
+                  assert (root / e["id"] / name).exists(), f"missing layer {e['id']}/{name}"
+          print(f"{len(events)} event(s) OK")
+          PY
